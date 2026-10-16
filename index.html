@@ -18,7 +18,11 @@ input{width:min(100%,500px)}
 button{cursor:pointer}
 .hero button{background:white;color:#1456a4;border:0;font-weight:bold}
 .panel{background:white;border:1px solid #dce5f0;border-radius:20px;padding:20px;margin-top:16px}
-.ad-slot{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:94px;margin:16px 0;padding:14px;border:2px dashed #b8c9dc;border-radius:16px;background:#f8fbff;color:#68788e;text-align:center}
+.ad-slot{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:94px;margin:16px 0;padding:14px;border:2px dashed #b8c9dc;border-radius:16px;background:#f8fbff;color:#68788e;text-align:center;overflow:hidden}
+.ad-slot a{display:block;width:100%;max-width:100%;color:inherit;text-decoration:none}
+.ad-slot img{display:block;width:100%;max-height:240px;object-fit:contain;border-radius:10px;margin:auto}
+.ad-slot.is-filled{padding:8px;border-style:solid;border-color:#dce5f0;background:white}
+.ad-slot.is-filled strong{display:block;margin:0 0 6px}
 .ad-slot strong{color:#48617d;font-size:14px}
 .ad-slot span{font-size:12px}
 #searchResults{display:grid;gap:8px;margin-top:10px}
@@ -54,9 +58,7 @@ footer{text-align:center;margin:24px 0;color:#68788e;font-size:12px;line-height:
  <span class="muted">اتصال به Open-Meteo</span>
 </header>
 
-<div class="ad-slot" id="ad-top" aria-label="جایگاه تبلیغات">
- <strong>📢 جایگاه تبلیغات</strong><span>تبلیغی ثبت نشده است</span>
-</div>
+<div class="ad-slot" id="ad-top" aria-label="جایگاه تبلیغات"></div>
 
 <section class="hero">
  <h2>آب‌وهوای شهر خودت رو ببین!</h2>
@@ -122,9 +124,7 @@ footer{text-align:center;margin:24px 0;color:#68788e;font-size:12px;line-height:
  <p id="status" class="status">در حال اتصال به سرویس هواشناسی...</p>
 </section>
 
-<div class="ad-slot" id="ad-middle" aria-label="جایگاه تبلیغات">
- <strong>📢 جایگاه تبلیغات</strong><span>تبلیغی ثبت نشده است</span>
-</div>
+<div class="ad-slot" id="ad-middle" aria-label="جایگاه تبلیغات"></div>
 
 <section class="panel">
  <h2>🌅 طلوع و غروب خورشید</h2>
@@ -151,9 +151,7 @@ footer{text-align:center;margin:24px 0;color:#68788e;font-size:12px;line-height:
  <div id="cities" class="grid"></div>
 </section>
 
-<div class="ad-slot" id="ad-bottom" aria-label="جایگاه تبلیغات">
- <strong>📢 جایگاه تبلیغات</strong><span>تبلیغی ثبت نشده است</span>
-</div>
+<div class="ad-slot" id="ad-bottom" aria-label="جایگاه تبلیغات"></div>
 
 <section class="panel" id="feedback">
  <h2>💬 نظرات و پیشنهادها</h2>
@@ -221,6 +219,48 @@ const weatherMap = {
 };
 
 const $ = id => document.getElementById(id);
+
+// تبلیغات را هر بار از همین بخش مدیریت می‌کنیم.
+// تا وقتی تصویر و لینک تبلیغ مشخص نشده، جایگاه به‌صورت خالی نمایش داده می‌شود.
+const adCampaigns = {
+ top: null,
+ middle: null,
+ bottom: null
+};
+
+function renderAdSlot(position, campaign){
+ const slot = $("ad-" + position);
+ if(!slot) return;
+ slot.replaceChildren();
+ slot.classList.remove("is-filled");
+ if(!campaign || !campaign.imageUrl || !campaign.href){
+  slot.innerHTML = '<strong>📢 جایگاه تبلیغات</strong><span>آمادهٔ نمایش بنر تبلیغاتی</span>';
+  return;
+ }
+ const link = document.createElement("a");
+ link.href = campaign.href;
+ link.target = "_blank";
+ link.rel = "noopener noreferrer sponsored";
+ link.setAttribute("aria-label", campaign.alt || "مشاهدهٔ تبلیغ");
+ const image = document.createElement("img");
+ image.src = campaign.imageUrl;
+ image.alt = campaign.alt || "بنر تبلیغاتی";
+ image.loading = "lazy";
+ image.onerror = () => {
+  slot.innerHTML = '<strong>📢 جایگاه تبلیغات</strong><span>تصویر تبلیغ بارگذاری نشد</span>';
+  slot.classList.remove("is-filled");
+ };
+ link.appendChild(image);
+ if(campaign.label){
+  const label = document.createElement("strong");
+  label.textContent = "تبلیغ · " + campaign.label;
+  slot.appendChild(label);
+ }
+ slot.appendChild(link);
+ slot.classList.add("is-filled");
+}
+
+Object.entries(adCampaigns).forEach(([position,campaign])=>renderAdSlot(position,campaign));
 
 function fa(n){
  return n == null ? "--" : String(n).replace(/\d/g,d=>"۰۱۲۳۴۵۶۷۸۹"[d]);
