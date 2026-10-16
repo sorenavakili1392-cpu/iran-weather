@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>مدیریت تبلیغات | هوای ایران</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f7fb;color:#17263d;font-family:Tahoma,sans-serif}.wrap{max-width:850px;margin:auto;padding:20px}header,.row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.card{background:white;border:1px solid #dce5f0;border-radius:18px;padding:20px;margin:16px 0}input,select,button{font:inherit;padding:12px;border-radius:10px;border:1px solid #dce5f0;max-width:100%}input,select{width:100%}button{cursor:pointer;background:#1456a4;color:white;border:0;font-weight:bold}.danger{background:#a92b3c}.muted{color:#68788e;font-size:13px;line-height:1.8}.field{display:grid;gap:7px;margin:12px 0}.hidden{display:none!important}.slot{padding:14px;border:1px solid #dce5f0;border-radius:12px;margin:10px 0}.status{white-space:pre-wrap;line-height:1.8}a{color:#1456a4}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./supabase-config.js"></script>
+</head>
+<body><main class="wrap">
+<header><div><h1>🛠️ پنل مدیریت تبلیغات</h1><p class="muted">سایت هوای ایران</p></div><a href="./index.html">بازگشت به سایت</a></header>
+<section id="setupWarning" class="card hidden"><b>⚙️ راه‌اندازی لازم است</b><p class="muted">ابتدا پروژه Supabase را بساز و مقادیر Project URL و anon/publishable key را در فایل <code>supabase-config.js</code> قرار بده. همچنین SQL موجود در <code>supabase-setup.sql</code> را اجرا و شناسهٔ کاربر مدیر را در سیاست‌های دسترسی جایگزین کن.</p></section>
+<section id="loginCard" class="card">
+<h2>🔐 ورود مدیر</h2><p class="muted">با ایمیل حساب مدیر و رمز آن وارد شو. رمز ۱۳۹۲ به‌تنهایی احراز هویت امنی نیست؛ دسترسی نوشتن علاوه بر ورود، به شناسهٔ مدیر در سیاست‌های دیتابیس محدود شده است.</p>
+<form id="loginForm">
+<label class="field">ایمیل حساب مدیر<input id="email" type="email" autocomplete="username" required placeholder="ایمیل حساب Supabase"></label>
+<label class="field">رمز عبور<input id="password" type="password" autocomplete="current-password" required placeholder="رمز حساب مدیر"></label>
+<button type="submit">ورود به پنل</button>
+</form><p id="loginStatus" class="status muted" aria-live="polite"></p>
+</section>
+<section id="manager" class="hidden">
+<div class="card"><div class="row"><h2>📣 افزودن یا جایگزینی بنر</h2><button id="logout" type="button">خروج</button></div>
+<p class="muted">برای تصویر از یک URL مستقیم و عمومی استفاده کن. ذخیره یا حذف در دیتابیس مشترک انجام می‌شود و بعد از بارگذاری مجدد برای همهٔ بازدیدکنندگان اعمال خواهد شد.</p>
+<form id="adForm">
+<label class="field">جایگاه بنر<select id="position"><option value="top">بالای سایت</option><option value="middle">وسط سایت</option><option value="bottom">پایین سایت</option></select></label>
+<label class="field">آدرس مستقیم تصویر<input id="imageUrl" type="url" required placeholder="https://example.com/banner.jpg"></label>
+<label class="field">لینک مقصد با کلیک روی بنر<input id="targetUrl" type="url" required placeholder="https://example.com"></label>
+<label class="field">نام تبلیغ (اختیاری)<input id="label" maxlength="100" placeholder="مثلاً فروشگاه نمونه"></label>
+<label class="field">متن جایگزین تصویر<input id="altText" maxlength="200" value="بنر تبلیغاتی"></label>
+<button type="submit">💾 ذخیرهٔ تبلیغ</button>
+</form><p id="saveStatus" class="status muted" aria-live="polite"></p></div>
+<div class="card"><h2>🗂️ تبلیغ‌های فعال</h2><div id="adList">در حال بارگذاری...</div><p id="listStatus" class="status muted" aria-live="polite"></p></div>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+let client=null;
+function configReady(){return window.SUPABASE_URL&&window.SUPABASE_ANON_KEY&&!window.SUPABASE_URL.includes("YOUR_PROJECT")&&!window.SUPABASE_ANON_KEY.includes("YOUR_SUPABASE")&&window.supabase}
+if(!configReady()){$("setupWarning").classList.remove("hidden");$("loginForm").querySelector("button").disabled=true;$("loginStatus").textContent="هنوز تنظیمات Supabase کامل نشده است."}
+else client=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+function safeText(value){return String(value||"")}
+async function showAds(){
+ const {data,error}=await client.from("ads").select("position,image_url,target_url,label,alt_text,updated_at").order("position");
+ if(error){$("listStatus").textContent="خطا در دریافت تبلیغ‌ها: "+error.message;return}
+ const labels={top:"بالای سایت",middle:"وسط سایت",bottom:"پایین سایت"};
+ if(!data.length){$("adList").textContent="هنوز تبلیغی ثبت نشده است.";return}
+ $("adList").replaceChildren();
+ data.forEach(ad=>{
+  const box=document.createElement("div");box.className="slot";
+  const title=document.createElement("h3");title.textContent=labels[ad.position]||ad.position;box.appendChild(title);
+  const img=document.createElement("img");img.src=ad.image_url;img.alt=ad.alt_text||"بنر";img.style.cssText="max-width:100%;max-height:130px;object-fit:contain";box.appendChild(img);
+  const info=document.createElement("p");info.className="muted";info.textContent=(ad.label||"بدون نام")+" · "+ad.target_url;box.appendChild(info);
+  const del=document.createElement("button");del.className="danger";del.type="button";del.textContent="حذف این تبلیغ";
+  del.addEventListener("click",async()=>{
+   if(!confirm("این تبلیغ برای همهٔ بازدیدکنندگان حذف شود؟"))return;
+   del.disabled=true;
+   const {error}=await client.from("ads").delete().eq("position",ad.position);
+   if(error){$("listStatus").textContent="حذف انجام نشد: "+error.message;del.disabled=false;return}
+   $("listStatus").textContent="تبلیغ حذف شد.";await showAds();
+  });
+  box.appendChild(del);$("adList").appendChild(box);
+ });
+}
+async function updateSession(){
+ const {data}=await client.auth.getSession();
+ const logged=!!data.session;
+ $("loginCard").classList.toggle("hidden",logged);
+ $("manager").classList.toggle("hidden",!logged);
+ if(logged)await showAds();
+}
+if(client){
+ $("loginForm").addEventListener("submit",async e=>{
+  e.preventDefault();$("loginStatus").textContent="در حال ورود...";
+  const {error}=await client.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});
+  if(error){$("loginStatus").textContent="ورود ناموفق بود. ایمیل، رمز و تنظیمات Supabase را بررسی کن.";return}
+  $("loginStatus").textContent="ورود انجام شد.";await updateSession();
+ });
+ $("logout").addEventListener("click",async()=>{await client.auth.signOut();await updateSession()});
+ $("adForm").addEventListener("submit",async e=>{
+  e.preventDefault();$("saveStatus").textContent="در حال ذخیره...";
+  const row={position:$("position").value,image_url:$("imageUrl").value.trim(),target_url:$("targetUrl").value.trim(),label:$("label").value.trim(),alt_text:$("altText").value.trim()||"بنر تبلیغاتی",updated_at:new Date().toISOString()};
+  if(!/^https?:\/\//i.test(row.image_url)||!/^https?:\/\//i.test(row.target_url)){$("saveStatus").textContent="لطفاً برای تصویر و لینک، آدرس کامل https:// وارد کن.";return}
+  const {error}=await client.from("ads").upsert(row,{onConflict:"position"});
+  if(error){$("saveStatus").textContent="ذخیره انجام نشد. مطمئن شو شناسهٔ کاربر مدیر در SQL درست ثبت شده است.";return}
+  $("saveStatus").textContent="✅ تبلیغ ذخیره شد و برای بازدیدکنندگان سایت در دسترس است.";
+  $("adForm").reset();$("altText").value="بنر تبلیغاتی";await showAds();
+ });
+ updateSession();
+}
+</script></body></html>
