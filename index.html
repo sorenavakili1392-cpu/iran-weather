@@ -135,6 +135,21 @@ footer{text-align:center;margin:24px 0;color:#68788e;font-size:12px;line-height:
  <div id="cities" class="grid"></div>
 </section>
 
+<section class="panel" id="feedback">
+ <h2>💬 نظرات و پیشنهادها</h2>
+ <p class="muted">نظر یا پیشنهادت رو بنویس؛ خوشحال می‌شیم بشنویم.</p>
+ <form id="feedbackForm" style="display:grid;gap:10px;max-width:680px">
+  <label for="feedbackName">نام (اختیاری)</label>
+  <input id="feedbackName" name="name" autocomplete="name" placeholder="اسمت رو وارد کن" style="width:100%">
+  <label for="feedbackEmail">ایمیل تو (برای پاسخ دادن)</label>
+  <input id="feedbackEmail" name="email" type="email" autocomplete="email" required placeholder="you@example.com" style="width:100%">
+  <label for="feedbackMessage">نظر یا پیشنهاد</label>
+  <textarea id="feedbackMessage" name="message" required minlength="3" maxlength="3000" rows="5" placeholder="نظرت رو اینجا بنویس..." style="width:100%;font:inherit;padding:12px;border-radius:12px;border:1px solid #dce5f0;resize:vertical"></textarea>
+  <button id="feedbackSubmit" type="submit" style="background:#1456a4;color:white;border:0;font-weight:bold">📨 ارسال نظر</button>
+  <p id="feedbackStatus" class="status" aria-live="polite">ایمیل فقط برای امکان پاسخ‌گویی استفاده می‌شه.</p>
+ </form>
+</section>
+
 <footer>
  داده‌ها از سرویس Open-Meteo دریافت می‌شوند.<br>
  این سایت برای نمایش هواشناسی به کلید API نیاز ندارد.
@@ -316,6 +331,38 @@ document.querySelectorAll("[data-open]").forEach(button=>{
 });
 
 loadCity("تهران");
+
+const feedbackForm = $("feedbackForm");
+feedbackForm.addEventListener("submit", async event => {
+ event.preventDefault();
+ const button = $("feedbackSubmit");
+ const status = $("feedbackStatus");
+ button.disabled = true;
+ button.textContent = "در حال ارسال...";
+ status.className = "status";
+ status.textContent = "در حال ارسال نظر...";
+ const payload = new FormData(feedbackForm);
+ payload.append("_subject", "نظر جدید برای سایت هوای ایران");
+ payload.append("_template", "table");
+ payload.append("_captcha", "true");
+ try {
+  const response = await fetch("https://formsubmit.co/ajax/sorenavakili1392@gmail.com", {
+   method: "POST",
+   headers: {"Accept":"application/json"},
+   body: payload
+  });
+  const result = await response.json();
+  if (!response.ok || result.success === false) throw new Error("ارسال انجام نشد");
+  status.textContent = "✅ نظرت ارسال شد؛ ممنون از بازخوردت!";
+  feedbackForm.reset();
+ } catch (error) {
+  status.className = "status error";
+  status.textContent = "ارسال انجام نشد. لطفاً چند دقیقهٔ دیگر دوباره تلاش کن.";
+ } finally {
+  button.disabled = false;
+  button.textContent = "📨 ارسال نظر";
+ }
+});
 </script>
 </body>
 </html>
