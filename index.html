@@ -41,6 +41,8 @@ button{cursor:pointer}
 .day{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .city{border:0;text-align:right}
 .muted{color:#68788e;font-size:13px}
+.admin-login{display:inline-flex;align-items:center;gap:6px;padding:10px 14px;border-radius:12px;background:#1456a4;color:#fff;text-decoration:none;font-size:13px;font-weight:bold;white-space:nowrap}
+.admin-login:hover{background:#0e4385}
 .status{margin-top:14px;font-size:13px}
 footer{text-align:center;margin:24px 0;color:#68788e;font-size:12px;line-height:2}
 @media(max-width:650px){
@@ -57,7 +59,10 @@ footer{text-align:center;margin:24px 0;color:#68788e;font-size:12px;line-height:
   <h1>🌤️ هوای ایران</h1>
   <p class="muted">پیش‌بینی زنده برای شهرهای ایران 🇮🇷</p>
  </div>
- <span class="muted">اتصال به Open-Meteo</span>
+ <div class="row">
+  <span class="muted">اتصال به Open-Meteo</span>
+  <a class="admin-login" href="./admin.html">🔐 ورود مدیر</a>
+ </div>
 </header>
 
 <div class="ad-slot" id="ad-top" aria-label="جایگاه تبلیغات"></div>
