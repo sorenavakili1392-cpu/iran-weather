@@ -12,7 +12,7 @@
 </head>
 <body><main class="wrap">
 <header><div><h1>🛠️ پنل مدیریت تبلیغات</h1><p class="muted">سایت هوای ایران</p></div><a href="./index.html">بازگشت به سایت</a></header>
-<section id="setupWarning" class="card hidden"><b>⚙️ راه‌اندازی لازم است</b><p class="muted">ابتدا پروژه Supabase را بساز و مقادیر Project URL و anon/publishable key را در فایل <code>supabase-config.js</code> قرار بده. همچنین SQL موجود در <code>supabase-setup.sql</code> را اجرا و شناسهٔ کاربر مدیر را در سیاست‌های دسترسی جایگزین کن.</p></section>
+<section id="setupWarning" class="card hidden"><b>⚙️ راه‌اندازی لازم است</b><p class="muted">ابتدا پروژه Supabase را بساز، در Authentication یک کاربر مدیر بساز، سپس UUID او را جایگزین ADMIN_USER_UUID در فایل <code>supabase-setup.sql</code> کن و SQL را اجرا کن. در پایان Project URL و anon/publishable key را در فایل <code>supabase-config.js</code> قرار بده.</p></section>
 <section id="loginCard" class="card">
 <h2>🔐 ورود مدیر</h2><p class="muted">با ایمیل حساب مدیر و رمز آن وارد شو. رمز ۱۳۹۲ به‌تنهایی احراز هویت امنی نیست؛ دسترسی نوشتن علاوه بر ورود، به شناسهٔ مدیر در سیاست‌های دیتابیس محدود شده است.</p>
 <form id="loginForm">
