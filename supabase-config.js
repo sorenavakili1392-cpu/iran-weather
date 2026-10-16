@@ -1,4 +1,5 @@
-// این دو مقدار را از Supabase > Project Settings > API بردار.
-// فقط Project URL و publishable/anon key را قرار بده؛ service_role key هرگز نباید در مرورگر باشد.
-window.SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";
-window.SUPABASE_ANON_KEY = "YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY";
+// Supabase project settings for Havaye Iran.
+// The publishable key is intended for public client-side use.
+// Never put a Supabase secret/service_role key in this file.
+window.SUPABASE_URL = "https://hrwhjhgwkqejgprnklfu.supabase.co";
+window.SUPABASE_ANON_KEY = "sb_publishable_J4_QNqwlr5ZJflzZUWh2_Q_tR2b663W";
