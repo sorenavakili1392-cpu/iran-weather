@@ -1,6 +1,6 @@
 -- هوای ایران: راه‌اندازی دیتابیس تبلیغات
--- 1) در Supabase > SQL Editor اجرا کن.
--- 2) بعد از ساخت کاربر ادمین در Authentication > Users، UUID او را در سیاست‌های پایین جایگزین ADMIN_USER_UUID کن.
+-- 1) اول در Authentication > Users یک کاربر مدیر بساز و UUID او را کپی کن.
+-- 2) همهٔ موارد ADMIN_USER_UUID را در این فایل با UUID واقعی مدیر جایگزین کن؛ بعد SQL را اجرا کن.
 -- 3) فقط anon/publishable key را در supabase-config.js قرار بده؛ هرگز service_role key را داخل سایت نگذار.
 
 create table if not exists public.ads (
