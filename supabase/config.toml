@@ -1,0 +1,4 @@
+project_id = "hrwhjhgwkqejgprnklfu"
+
+[functions.weather-chat]
+verify_jwt = false
