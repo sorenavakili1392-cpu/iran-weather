@@ -6,6 +6,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>هوای ایران | هواشناسی زنده</title>
 <meta name="google-site-verification" content="pp4yMCwR3mZ0GqJCeS-n45U54HnCSKTqYlFBbVxoklI" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./supabase-config.js"></script>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#f3f7fb;color:#17263d;font-family:Tahoma,sans-serif}
@@ -220,13 +222,8 @@ const weatherMap = {
 
 const $ = id => document.getElementById(id);
 
-// تبلیغات را هر بار از همین بخش مدیریت می‌کنیم.
-// تا وقتی تصویر و لینک تبلیغ مشخص نشده، جایگاه به‌صورت خالی نمایش داده می‌شود.
-const adCampaigns = {
- top: null,
- middle: null,
- bottom: null
-};
+// تبلیغ‌ها از دیتابیس مشترک Supabase خوانده می‌شوند تا تغییرات برای همه بازدیدکنندگان دیده شود.
+const adCampaigns = { top: null, middle: null, bottom: null };
 
 function renderAdSlot(position, campaign){
  const slot = $("ad-" + position);
@@ -261,6 +258,28 @@ function renderAdSlot(position, campaign){
 }
 
 Object.entries(adCampaigns).forEach(([position,campaign])=>renderAdSlot(position,campaign));
+
+async function loadSharedAds(){
+ try{
+  if(!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY ||
+     window.SUPABASE_URL.includes("YOUR_PROJECT") ||
+     window.SUPABASE_ANON_KEY.includes("YOUR_SUPABASE")){
+   return;
+  }
+  const client = window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+  const {data,error} = await client.from("ads").select("position,image_url,target_url,label,alt_text");
+  if(error) throw error;
+  ["top","middle","bottom"].forEach(position=>{
+   const row=(data||[]).find(item=>item.position===position);
+   const campaign=row ? {imageUrl:row.image_url,href:row.target_url,label:row.label,alt:row.alt_text} : null;
+   adCampaigns[position]=campaign;
+   renderAdSlot(position,campaign);
+  });
+ }catch(error){
+  console.warn("تبلیغات مشترک بارگذاری نشدند:",error.message);
+ }
+}
+loadSharedAds();
 
 function fa(n){
  return n == null ? "--" : String(n).replace(/\d/g,d=>"۰۱۲۳۴۵۶۷۸۹"[d]);
