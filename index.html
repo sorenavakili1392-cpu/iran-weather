@@ -45,6 +45,22 @@ button{cursor:pointer}
 .admin-login:hover{background:#0e4385}
 .status{margin-top:14px;font-size:13px}
 footer{text-align:center;margin:24px 0;color:#68788e;font-size:12px;line-height:2}
+
+/* دستیار هوشمند هواشناسی */
+.chat-intro{display:flex;align-items:center;gap:12px}
+.chat-avatar{display:grid;place-items:center;width:48px;height:48px;flex:0 0 48px;border-radius:16px;background:linear-gradient(135deg,#1456a4,#24b7b5);font-size:26px}
+.chat-prompts{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.chat-prompts button{background:#eaf2fc;color:#1456a4;border:1px solid #dce5f0;font-size:13px}
+.chat-messages{display:grid;gap:10px;max-height:360px;overflow:auto;padding:12px;background:#f8fbff;border:1px solid #e3ebf5;border-radius:16px}
+.chat-message{max-width:92%;padding:12px 14px;border-radius:15px;line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere}
+.chat-message.assistant{justify-self:start;background:#fff;border:1px solid #dce5f0}
+.chat-message.user{justify-self:end;background:#1456a4;color:#fff}
+.chat-form{display:flex;gap:8px;margin-top:12px}
+.chat-form input{width:100%;min-width:0}
+.chat-form button{background:#1456a4;color:#fff;border:0;font-weight:bold;white-space:nowrap}
+.chat-form button:disabled{opacity:.6;cursor:wait}
+.chat-status{min-height:22px}
+
 @media(max-width:650px){
  .wrap{padding:14px}
  .grid,.stats{grid-template-columns:repeat(2,1fr)}
@@ -153,6 +169,30 @@ footer{text-align:center;margin:24px 0;color:#68788e;font-size:12px;line-height:
  <div id="days" class="days">در حال بارگذاری...</div>
 </section>
 
+
+<section class="panel" id="weatherAssistant">
+ <div class="chat-intro">
+  <div class="chat-avatar" aria-hidden="true">🤖</div>
+  <div>
+   <h2 style="margin:0 0 5px">🤖 دستیار هوشمند هوای ایران</h2>
+   <p class="muted" style="margin:0">دربارهٔ پیش‌بینی شهر انتخاب‌شده سؤال بپرس؛ پاسخ با داده‌های واقعی هواشناسی ساخته می‌شود.</p>
+  </div>
+ </div>
+ <div class="chat-prompts" aria-label="سؤال‌های پیشنهادی">
+  <button type="button" data-chat-prompt="فردا هوای این شهر چطور است؟">🌤️ هوای فردا</button>
+  <button type="button" data-chat-prompt="در روزهای آینده احتمال بارش چه زمانی بیشتر است؟">🌧️ احتمال بارش</button>
+  <button type="button" data-chat-prompt="برای بیرون رفتن در این شهر چه نکته‌ای درباره هوا بدانم؟">🧥 پیشنهاد برای بیرون رفتن</button>
+ </div>
+ <div id="chatMessages" class="chat-messages" aria-live="polite" aria-label="گفت‌وگوی دستیار">
+  <div class="chat-message assistant">سلام! 👋 اول شهر موردنظرت رو از بخش بالای سایت انتخاب کن، بعد هر سؤالی دربارهٔ پیش‌بینی هوا داری بپرس.</div>
+ </div>
+ <form id="weatherChatForm" class="chat-form">
+  <input id="chatInput" maxlength="500" autocomplete="off" placeholder="مثلاً فردا چتر لازم دارم؟" aria-label="پیام به دستیار" required>
+  <button id="chatSend" type="submit">ارسال ↗</button>
+ </form>
+ <p id="chatStatus" class="muted chat-status" aria-live="polite">پاسخ‌ها بر اساس پیش‌بینی موجود هستند؛ هواشناسی قطعی نیست.</p>
+</section>
+
 <section class="panel">
  <h2>✨ شهرهای محبوب ایران</h2>
  <div id="cities" class="grid"></div>
@@ -226,6 +266,9 @@ const weatherMap = {
 };
 
 const $ = id => document.getElementById(id);
+
+let lastWeatherContext = null;
+const chatHistory = [];
 
 // تبلیغ‌ها از دیتابیس مشترک Supabase خوانده می‌شوند تا تغییرات برای همه بازدیدکنندگان دیده شود.
 const adCampaigns = { top: null, middle: null, bottom: null };
@@ -356,6 +399,39 @@ async function loadCity(name, overrideCoords=null){
   let start = h.time.findIndex(t=>t>=c.time);
   if(start<0) start=0;
 
+  lastWeatherContext = {
+   city: name,
+   timezone: data.timezone,
+   current: {
+    time: c.time,
+    temperature_c: c.temperature_2m,
+    feels_like_c: c.apparent_temperature,
+    humidity_percent: c.relative_humidity_2m,
+    weather_code: c.weather_code,
+    wind_speed_kmh: c.wind_speed_10m,
+    wind_direction_degrees: c.wind_direction_10m,
+    cloud_cover_percent: c.cloud_cover
+   },
+   daily: d.time.map((date,i)=>({
+    date,
+    weather_code: d.weather_code[i],
+    max_c: d.temperature_2m_max[i],
+    min_c: d.temperature_2m_min[i],
+    precipitation_probability_percent: d.precipitation_probability_max[i],
+    sunrise: d.sunrise[i],
+    sunset: d.sunset[i]
+   })),
+   next_24_hours: h.time.slice(start,start+24).map((time,j)=>{
+    const i=start+j;
+    return {
+     time,
+     temperature_c: h.temperature_2m[i],
+     precipitation_probability_percent: h.precipitation_probability[i],
+     weather_code: h.weather_code[i]
+    };
+   })
+  };
+
   $("hourly").innerHTML = h.time.slice(start,start+24).map((t,j)=>{
    const i=start+j;
    const ww=weather(h.weather_code[i]);
@@ -467,6 +543,79 @@ feedbackForm.addEventListener("submit", async event => {
   button.textContent = "📨 ارسال نظر";
  }
 });
+ 
+// گفت‌وگوی محلی در مرورگر؛ تاریخچه به سرور پایگاه داده ذخیره نمی‌شود.
+const chatForm = $("weatherChatForm");
+const chatInput = $("chatInput");
+const chatSend = $("chatSend");
+const chatMessages = $("chatMessages");
+const chatStatus = $("chatStatus");
+
+function addChatMessage(role, message){
+ const item = document.createElement("div");
+ item.className = "chat-message " + (role === "user" ? "user" : "assistant");
+ item.textContent = message;
+ chatMessages.appendChild(item);
+ chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+async function sendWeatherChat(message){
+ const clean = String(message || "").trim();
+ if(!clean) return;
+ if(!lastWeatherContext){
+  chatStatus.textContent = "اول صبر کن اطلاعات هواشناسی شهر بارگذاری بشه یا یک شهر انتخاب کن.";
+  return;
+ }
+ if(!window.supabase || !window.SUPABASE_URL || !window.SUPABASE_ANON_KEY){
+  chatStatus.textContent = "تنظیمات ارتباط با دستیار کامل نیست.";
+  return;
+ }
+ addChatMessage("user", clean);
+ chatHistory.push({role:"user",content:clean});
+ chatInput.value = "";
+ chatInput.disabled = true;
+ chatSend.disabled = true;
+ chatStatus.textContent = "🤖 دارم پیش‌بینی رو بررسی می‌کنم...";
+ try{
+  const client = window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+  const {data,error} = await client.functions.invoke("weather-chat",{
+   body:{
+    message:clean,
+    city:lastWeatherContext.city,
+    weather:lastWeatherContext,
+    history:chatHistory.slice(-6)
+   }
+  });
+  if(error) throw error;
+  if(!data || typeof data.answer !== "string" || !data.answer.trim()){
+   throw new Error("پاسخ معتبری دریافت نشد.");
+  }
+  addChatMessage("assistant",data.answer);
+  chatHistory.push({role:"assistant",content:data.answer});
+  if(chatHistory.length>8) chatHistory.splice(0,chatHistory.length-8);
+  chatStatus.textContent = "✅ پاسخ بر اساس داده‌های فعلی هواشناسی ساخته شد.";
+ }catch(error){
+  console.error("دستیار هواشناسی:",error);
+  addChatMessage("assistant","فعلاً نتونستم به دستیار وصل بشم. ممکنه سرویس هنوز در Supabase راه‌اندازی نشده باشه؛ چند دقیقهٔ دیگه دوباره امتحان کن.");
+  chatStatus.textContent = "اتصال به دستیار برقرار نشد.";
+ }finally{
+  chatInput.disabled = false;
+  chatSend.disabled = false;
+  chatInput.focus();
+ }
+}
+
+chatForm.addEventListener("submit",event=>{
+ event.preventDefault();
+ sendWeatherChat(chatInput.value);
+});
+document.querySelectorAll("[data-chat-prompt]").forEach(button=>{
+ button.addEventListener("click",()=>{
+  chatInput.value=button.dataset.chatPrompt;
+  chatForm.requestSubmit();
+ });
+});
+
 </script>
 </body>
 </html>
