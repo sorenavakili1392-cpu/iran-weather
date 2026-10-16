@@ -401,6 +401,8 @@ async function loadCity(name, overrideCoords=null){
 
   lastWeatherContext = {
    city: name,
+   latitude: coords[0],
+   longitude: coords[1],
    timezone: data.timezone,
    current: {
     time: c.time,
@@ -582,8 +584,9 @@ async function sendWeatherChat(message){
    body:{
     message:clean,
     city:lastWeatherContext.city,
-    weather:lastWeatherContext,
-    history:chatHistory.slice(-6)
+    latitude:lastWeatherContext.latitude,
+    longitude:lastWeatherContext.longitude,
+    history:chatHistory.slice(0,-1).slice(-6)
    }
   });
   if(error) throw error;
