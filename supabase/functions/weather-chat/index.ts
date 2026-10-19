@@ -67,7 +67,8 @@ Deno.serve(async (req: Request) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const cloudflareAccountId = Deno.env.get("CLOUDFLARE_ACCOUNT_ID");
+    // Account ID is an identifier, not a secret. The API token stays in Supabase Secrets.
+    const cloudflareAccountId = Deno.env.get("CLOUDFLARE_ACCOUNT_ID") || "fdd1073ad7ebf4dcf1e2d0596fbbac44";
     const cloudflareApiToken = Deno.env.get("CLOUDFLARE_API_TOKEN");
     if (!supabaseUrl || !serviceRoleKey || !cloudflareAccountId || !cloudflareApiToken) {
       console.error("Required server environment variables are missing.");
